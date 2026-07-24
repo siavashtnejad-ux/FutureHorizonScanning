@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ثبت سیگنال | رصد افق اخلاق زیست‌پزشکی ایران</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-navy:#12182B;
+    --sky-deep:#1B2340;
+    --glow-violet:#7C5CBF;
+    --glow-amber:#D9A441;
+    --paper:#F5F1E8;
+    --paper-line:#E4DDC9;
+    --text-ink:#1F2430;
+    --text-muted:#5B5A4E;
+    --text-onDark:#F2EFE6;
+    --teal:#3FA796;
+    --teal-dark:#2C7B6F;
+    --danger:#C4553F;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Vazirmatn', Tahoma, sans-serif;
+    background:var(--paper);
+    color:var(--text-ink);
+    line-height:1.85;
+  }
+  /* ---------- Hero / horizon scan header ---------- */
+  .hero{
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(180deg, var(--ink-navy) 0%, var(--sky-deep) 55%, #24304F 78%, var(--glow-amber) 140%);
+    padding:64px 24px 90px;
+    text-align:center;
+    color:var(--text-onDark);
+  }
+  .hero::before{
+    /* horizon glow */
+    content:"";
+    position:absolute;
+    left:0; right:0; bottom:-40px;
+    height:180px;
+    background:radial-gradient(60% 100% at 50% 100%, rgba(217,164,65,0.55) 0%, rgba(124,92,191,0.25) 45%, rgba(27,35,64,0) 80%);
+    pointer-events:none;
+  }
+  .scan-line{
+    position:absolute;
+    top:38%;
+    right:-10%;
+    width:120%;
+    height:1px;
+    background:linear-gradient(90deg, transparent, rgba(63,167,150,0.9), transparent);
+    transform-origin:50% 50%;
+    animation:sweep 7s ease-in-out infinite;
+    opacity:0.8;
+  }
+  @keyframes sweep{
+    0%{ transform:rotate(-6deg); opacity:0.15; }
+    50%{ transform:rotate(6deg); opacity:0.85; }
+    100%{ transform:rotate(-6deg); opacity:0.15; }
+  }
+  .blip{
+    position:absolute;
+    width:6px;height:6px;border-radius:50%;
+    background:var(--teal);
+    box-shadow:0 0 10px 2px rgba(63,167,150,0.8);
+    animation:pulse 3.2s ease-in-out infinite;
+  }
+  .blip:nth-child(1){ top:30%; right:18%; animation-delay:.2s;}
+  .blip:nth-child(2){ top:46%; right:62%; animation-delay:1.4s;}
+  .blip:nth-child(3){ top:24%; right:78%; animation-delay:2.3s;}
+  @keyframes pulse{
+    0%,100%{ opacity:.25; transform:scale(.8);}
+    50%{ opacity:1; transform:scale(1.3);}
+  }
+  .eyebrow{
+    font-size:14px;
+    letter-spacing:.02em;
+    color:var(--teal);
+    font-weight:600;
+    margin-bottom:14px;
+  }
+  .hero h1{
+    font-size:clamp(26px,4vw,38px);
+    font-weight:800;
+    margin:0 auto 16px;
+    max-width:720px;
+  }
+  .hero p{
+    max-width:620px;
+    margin:0 auto;
+    color:#D8D4C6;
+    font-size:15.5px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .scan-line, .blip{ animation:none; }
+  }
+
+  /* ---------- Form card ---------- */
+  .wrap{
+    max-width:760px;
+    margin:-56px auto 60px;
+    padding:0 20px;
+    position:relative;
+    z-index:2;
+  }
+  form{
+    background:#fff;
+    border:1px solid var(--paper-line);
+    border-radius:var(--radius);
+    box-shadow:0 24px 60px -30px rgba(18,24,43,0.35);
+    padding:38px clamp(20px,5vw,48px) 44px;
+  }
+  fieldset{
+    border:none;
+    margin:0 0 30px;
+    padding:0;
+  }
+  .step-label{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:13px;
+    font-weight:700;
+    color:var(--teal-dark);
+    margin-bottom:6px;
+  }
+  .step-label .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--teal);
+    flex:none;
+  }
+  legend{
+    font-size:19px;
+    font-weight:700;
+    color:var(--text-ink);
+    margin-bottom:4px;
+    padding:0;
+  }
+  .hint{
+    color:var(--text-muted);
+    font-size:13.5px;
+    margin:2px 0 18px;
+  }
+  label.field-label{
+    display:block;
+    font-weight:600;
+    font-size:14.5px;
+    margin:16px 0 6px;
+  }
+  label.field-label .req{ color:var(--danger); margin-inline-start:4px; }
+  input[type=text], input[type=email], input[type=url], textarea, select{
+    width:100%;
+    font-family:inherit;
+    font-size:15px;
+    padding:12px 14px;
+    border:1.5px solid #DEDACB;
+    border-radius:10px;
+    background:#FCFBF7;
+    color:var(--text-ink);
+    transition:border-color .15s, box-shadow .15s;
+  }
+  textarea{ min-height:96px; resize:vertical; }
+  input:focus, textarea:focus, select:focus{
+    outline:none;
+    border-color:var(--teal);
+    box-shadow:0 0 0 3px rgba(63,167,150,0.18);
+  }
+  select{ appearance:none; background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="%235B5A4E" stroke-width="2"><path d="M2 4l5 5 5-5"/></svg>'); background-repeat:no-repeat; background-position:left 14px center; }
+
+  /* tiered scale — signal-strength bars instead of plain radios */
+  .tier-scale{ display:flex; gap:10px; margin-top:6px; }
+  .tier-option{ flex:1; }
+  .tier-option input{ position:absolute; opacity:0; width:0; height:0; }
+  .tier-option label{
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    padding:14px 8px 12px;
+    border:1.5px solid #DEDACB;
+    border-radius:10px;
+    cursor:pointer;
+    text-align:center;
+    font-size:13px;
+    font-weight:600;
+    color:var(--text-muted);
+    transition:border-color .15s, background .15s, color .15s;
+  }
+  .bars{ display:flex; gap:3px; align-items:flex-end; height:22px; }
+  .bars span{ width:6px; background:#DEDACB; border-radius:2px; transition:background .15s; }
+  .bars span:nth-child(1){ height:8px; }
+  .bars span:nth-child(2){ height:14px; }
+  .bars span:nth-child(3){ height:22px; }
+  .tier-option input:checked + label{
+    border-color:var(--teal);
+    background:rgba(63,167,150,0.08);
+    color:var(--teal-dark);
+  }
+  .tier-option input:checked + label .bars span{ background:var(--teal); }
+  .tier-option input:focus-visible + label{ box-shadow:0 0 0 3px rgba(63,167,150,0.25); }
+
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:0 18px; }
+  @media (max-width:560px){ .grid-2{ grid-template-columns:1fr; } }
+
+  .submit-row{ margin-top:34px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  button[type=submit]{
+    background:var(--teal-dark);
+    color:#fff;
+    border:none;
+    font-family:inherit;
+    font-weight:700;
+    font-size:15.5px;
+    padding:14px 30px;
+    border-radius:10px;
+    cursor:pointer;
+    transition:background .15s, transform .1s;
+  }
+  button[type=submit]:hover{ background:var(--teal); }
+  button[type=submit]:active{ transform:translateY(1px); }
+  button[type=submit]:disabled{ background:#B9B6A8; cursor:progress; }
+
+  .status{ font-size:14px; font-weight:600; display:none; align-items:center; gap:8px; }
+  .status.show{ display:flex; }
+  .status.ok{ color:var(--teal-dark); }
+  .status.err{ color:var(--danger); }
+
+  footer{
+    text-align:center;
+    font-size:12.5px;
+    color:var(--text-muted);
+    padding-bottom:40px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="hero">
+    <div class="scan-line"></div>
+    <div class="blip"></div><div class="blip"></div><div class="blip"></div>
+    <div class="eyebrow">فاز اول &middot; رصد افق و شناسایی سیگنال</div>
+    <h1>ثبت سیگنال نوظهور اخلاقی</h1>
+    <p>هر فناوری، شیوه پژوهشی یا پویایی اجتماعی نوظهور در علوم زیست‌پزشکی ایران که ممکن است پیامد اخلاقی داشته باشد را در این فرم ثبت کنید. اطلاعات شما مستقیماً وارد نقشه رصد افق پروژه می‌شود.</p>
+  </div>
+
+  <div class="wrap">
+    <form id="signalForm" novalidate>
+
+      <fieldset>
+        <div class="step-label"><span class="dot"></span>۱ از ۳</div>
+        <legend>معرفی سیگنال</legend>
+        <p class="hint">عنوان و توضیح کوتاهی از سیگنال شناسایی‌شده بنویسید.</p>
+
+        <label class="field-label" for="title">عنوان سیگنال<span class="req">*</span></label>
+        <input type="text" id="title" name="title" required placeholder="مثال: استفاده از سیستم‌های هوش مصنوعی مولد در تشخیص بالینی">
+
+        <label class="field-label" for="description">توضیحات<span class="req">*</span></label>
+        <textarea id="description" name="description" required placeholder="این سیگنال چیست؟ چرا واجد اهمیت اخلاقی است؟"></textarea>
+
+        <div class="grid-2">
+          <div>
+            <label class="field-label" for="subfield">حوزه زیست‌پزشکی<span class="req">*</span></label>
+            <select id="subfield" name="subfield" required>
+              <option value="" disabled selected>انتخاب کنید…</option>
+              <option>ژنومیک</option>
+              <option>عصب‌فناوری</option>
+              <option>پزشکی دقیق</option>
+              <option>فناوری‌های باروری</option>
+              <option>پژوهش ارگانوئید</option>
+              <option>سلامت دیجیتال</option>
+              <option>هوش مصنوعی در پزشکی</option>
+              <option>سایر</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="sourceType">نوع منبع<span class="req">*</span></label>
+            <select id="sourceType" name="sourceType" required>
+              <option value="" disabled selected>انتخاب کنید…</option>
+              <option>مقاله علمی داوری‌شده</option>
+              <option>ادبیات خاکستری (گزارش سیاستی)</option>
+              <option>پایگاه داده پتنت / نوآوری</option>
+              <option>رسانه و بحث عمومی</option>
+              <option>فراخوان پژوهشی ملی/بین‌المللی</option>
+              <option>سایر</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="field-label" for="sourceLink">لینک یا ارجاع منبع</label>
+        <input type="text" id="sourceLink" name="sourceLink" placeholder="آدرس اینترنتی یا ارجاع کتاب‌شناختی">
+      </fieldset>
+
+      <fieldset>
+        <div class="step-label"><span class="dot"></span>۲ از ۳</div>
+        <legend>طبقه‌بندی اولیه</legend>
+        <p class="hint">سطح بلوغ، دامنه جغرافیایی و شدت اخلاقی اولیه سیگنال را مشخص کنید.</p>
+
+        <label class="field-label">سطح بلوغ<span class="req">*</span></label>
+        <div class="tier-scale" role="radiogroup" aria-label="سطح بلوغ">
+          <div class="tier-option">
+            <input type="radio" name="maturity" id="mat1" value="نوظهور" required>
+            <label for="mat1"><span class="bars"><span></span><span></span><span></span></span>نوظهور</label>
+          </div>
+          <div class="tier-option">
+            <input type="radio" name="maturity" id="mat2" value="در حال توسعه">
+            <label for="mat2"><span class="bars"><span></span><span></span><span></span></span>در حال توسعه</label>
+          </div>
+          <div class="tier-option">
+            <input type="radio" name="maturity" id="mat3" value="تثبیت‌شده">
+            <label for="mat3"><span class="bars"><span></span><span></span><span></span></span>تثبیت‌شده</label>
+          </div>
+        </div>
+
+        <label class="field-label">دامنه جغرافیایی<span class="req">*</span></label>
+        <div class="tier-scale" role="radiogroup" aria-label="دامنه جغرافیایی">
+          <div class="tier-option">
+            <input type="radio" name="geography" id="geo1" value="مختص ایران" required>
+            <label for="geo1"><span class="bars"><span></span><span></span><span></span></span>مختص ایران</label>
+          </div>
+          <div class="tier-option">
+            <input type="radio" name="geography" id="geo2" value="منطقه‌ای (خاورمیانه)">
+            <label for="geo2"><span class="bars"><span></span><span></span><span></span></span>منطقه‌ای</label>
+          </div>
+          <div class="tier-option">
+            <input type="radio" name="geography" id="geo3" value="جهانی">
+            <label for="geo3"><span class="bars"><span></span><span></span><span></span></span>جهانی</label>
+          </div>
+        </div>
+
+        <label class="field-label">شدت اخلاقی اولیه<span class="req">*</span></label>
+        <div class="tier-scale" role="radiogroup" aria-label="شدت اخلاقی اولیه">
+          <div class="tier-option">
+            <input type="radio" name="intensity" id="int1" value="کم" required>
+            <label for="int1"><span class="bars"><span></span><span></span><span></span></span>کم</label>
+          </div>
+          <div class="tier-option">
+            <input type="radio" name="intensity" id="int2" value="متوسط">
+            <label for="int2"><span class="bars"><span></span><span></span><span></span></span>متوسط</label>
+          </div>
+          <div class="tier-option">
+            <input type="radio" name="intensity" id="int3" value="زیاد">
+            <label for="int3"><span class="bars"><span></span><span></span><span></span></span>زیاد</label>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <div class="step-label"><span class="dot"></span>۳ از ۳</div>
+        <legend>اطلاعات ثبت‌کننده</legend>
+        <p class="hint">این بخش اختیاری است و صرفاً برای پیگیری‌های احتمالی تیم پژوهش استفاده می‌شود.</p>
+
+        <div class="grid-2">
+          <div>
+            <label class="field-label" for="submitterName">نام و وابستگی سازمانی</label>
+            <input type="text" id="submitterName" name="submitterName" placeholder="اختیاری">
+          </div>
+          <div>
+            <label class="field-label" for="submitterEmail">ایمیل</label>
+            <input type="email" id="submitterEmail" name="submitterEmail" placeholder="اختیاری">
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="submit-row">
+        <button type="submit" id="submitBtn">ثبت سیگنال</button>
+        <div class="status" id="statusMsg"></div>
+      </div>
+    </form>
+  </div>
+
+  <footer>پروژه رصد افق اخلاق زیست‌پزشکی ایران &middot; فاز اول: شناسایی سیگنال</footer>
+
+<script>
+  // Replace with your deployed Google Apps Script Web App URL (see apps-script.gs)
+  const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbyZHESMWxHInCLWkPdNtAK6hAr4WJwT6E3ZWYUzbrvUulh0J_AlzHWBSUbsTDTTRGKM/exec";
+
+  const form = document.getElementById('signalForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const statusMsg = document.getElementById('statusMsg');
+
+  function setStatus(kind, text){
+    statusMsg.textContent = text;
+    statusMsg.className = 'status show ' + kind;
+  }
+
+  function localBackup(record){
+    try{
+      const key = 'ethicalHorizonSignals';
+      const existing = JSON.parse(localStorage.getItem(key) || '[]');
+      existing.push(record);
+      localStorage.setItem(key, JSON.stringify(existing));
+    }catch(e){ /* localStorage unavailable — ignore */ }
+  }
+
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    if(!form.checkValidity()){
+      form.reportValidity();
+      return;
+    }
+
+    const data = Object.fromEntries(new FormData(form).entries());
+    data.timestamp = new Date().toISOString();
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'در حال ثبت…';
+    statusMsg.className = 'status';
+
+    localBackup(data);
+
+    if(!ENDPOINT_URL || ENDPOINT_URL.startsWith('PASTE_')){
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'ثبت سیگنال';
+      setStatus('err', 'آدرس اتصال به Google Sheets هنوز تنظیم نشده است. سیگنال به‌صورت موقت روی همین مرورگر ذخیره شد.');
+      return;
+    }
+
+    try{
+      await fetch(ENDPOINT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(data)
+      });
+      form.reset();
+      setStatus('ok', 'سیگنال با موفقیت ثبت شد. سپاسگزاریم.');
+    }catch(err){
+      setStatus('err', 'ثبت آنلاین ناموفق بود. نسخه‌ای از داده روی همین مرورگر ذخیره شد — لطفاً بعداً دوباره تلاش کنید.');
+    }finally{
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'ثبت سیگنال';
+    }
+  });
+</script>
+</body>
+</html>
