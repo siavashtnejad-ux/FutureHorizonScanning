@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>پلتفرم رصد افق | اخلاق زیست‌پزشکی ایران</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1"></script>
+<style>
+  :root{
+    --ink-navy:#12182B; --sky-deep:#1B2340; --glow-amber:#D9A441; --glow-violet:#7C5CBF;
+    --paper:#F5F1E8; --paper-line:#E4DDC9; --text-ink:#1F2430; --text-muted:#5B5A4E;
+    --text-onDark:#F2EFE6; --teal:#3FA796; --teal-dark:#2C7B6F; --danger:#C4553F;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{ font-family:'Vazirmatn', Tahoma, sans-serif; background:var(--paper); color:var(--text-ink); line-height:1.85; }
+
+  /* ---------- App shell ---------- */
+  .appbar{
+    background:linear-gradient(135deg, var(--ink-navy), var(--sky-deep) 60%, #2A3660);
+    color:var(--text-onDark);
+    padding:18px 24px 0;
+    position:sticky; top:0; z-index:10;
+    box-shadow:0 8px 24px -14px rgba(18,24,43,0.6);
+  }
+  .appbar-top{ display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:14px; }
+  .appbar h1{ font-size:16.5px; font-weight:800; margin:0; }
+  .appbar .tagline{ font-size:12px; color:#C8C4B4; margin-top:2px; }
+  .tabs{ display:flex; gap:4px; overflow-x:auto; }
+  .tabs button{
+    appearance:none; border:none; background:transparent; color:#C8C4B4;
+    font-family:inherit; font-size:14px; font-weight:600; cursor:pointer;
+    padding:12px 16px; border-radius:10px 10px 0 0; white-space:nowrap;
+    border-bottom:3px solid transparent; transition:.15s;
+  }
+  .tabs button:hover{ color:var(--text-onDark); }
+  .tabs button[aria-selected="true"]{ color:var(--text-onDark); background:var(--paper); border-bottom-color:var(--teal); }
+  .tabs button:focus-visible{ outline:2px solid var(--teal); outline-offset:2px; }
+
+  main{ max-width:1180px; margin:0 auto; padding:28px 20px 60px; }
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  .lede{ max-width:760px; color:var(--text-muted); font-size:14.5px; margin:0 0 22px; }
+  .lede b{ color:var(--text-ink); }
+
+  .panel{
+    background:#fff; border:1px solid var(--paper-line); border-radius:var(--radius);
+    box-shadow:0 14px 34px -22px rgba(18,24,43,0.3);
+    padding:26px clamp(18px,4vw,36px);
+    margin-bottom:20px;
+  }
+
+  /* form controls (shared) */
+  label.field-label{ display:block; font-weight:600; font-size:14.5px; margin:14px 0 6px; }
+  label.field-label .req{ color:var(--danger); margin-inline-start:4px; }
+  input[type=text], input[type=email], textarea, select{
+    width:100%; font-family:inherit; font-size:15px; padding:12px 14px;
+    border:1.5px solid #DEDACB; border-radius:10px; background:#FCFBF7; color:var(--text-ink);
+    transition:border-color .15s, box-shadow .15s;
+  }
+  textarea{ min-height:90px; resize:vertical; }
+  input:focus, textarea:focus, select:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(63,167,150,0.18); }
+  select{ appearance:none; background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="%235B5A4E" stroke-width="2"><path d="M2 4l5 5 5-5"/></svg>'); background-repeat:no-repeat; background-position:left 14px center; }
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:0 18px; }
+  @media (max-width:560px){ .grid-2{ grid-template-columns:1fr; } }
+
+  .tier-scale{ display:flex; gap:8px; margin-top:6px; }
+  .tier-option{ flex:1; }
+  .tier-option input{ position:absolute; opacity:0; width:0; height:0; }
+  .tier-option label{
+    display:flex; flex-direction:column; align-items:center; gap:7px;
+    padding:12px 8px; border:1.5px solid #DEDACB; border-radius:9px; cursor:pointer;
+    text-align:center; font-size:12.5px; font-weight:600; color:var(--text-muted); transition:.15s;
+  }
+  .bars{ display:flex; gap:3px; align-items:flex-end; height:18px; }
+  .bars span{ width:5px; background:#DEDACB; border-radius:2px; transition:background .15s; }
+  .bars span:nth-child(1){ height:7px; } .bars span:nth-child(2){ height:12px; } .bars span:nth-child(3){ height:18px; }
+  .tier-option input:checked + label{ border-color:var(--teal); background:rgba(63,167,150,0.08); color:var(--teal-dark); }
+  .tier-option input:checked + label .bars span{ background:var(--teal); }
+  .tier-option input:focus-visible + label{ box-shadow:0 0 0 3px rgba(63,167,150,0.25); }
+
+  button.primary, button.ghost{
+    font-family:inherit; font-weight:700; font-size:15px; border-radius:10px; cursor:pointer; transition:.15s; border:none;
+  }
+  button.primary{ background:var(--teal-dark); color:#fff; padding:13px 28px; }
+  button.primary:hover{ background:var(--teal); }
+  button.primary:disabled{ background:#B9B6A8; cursor:progress; }
+  button.ghost{ background:#fff; color:var(--teal-dark); border:1.5px solid var(--teal); padding:10px 20px; font-size:13.5px; }
+  button.ghost:hover{ background:rgba(63,167,150,0.08); }
+  button.reject{ background:#fff; color:var(--danger); border:1.5px solid var(--danger); padding:9px 16px; font-size:13px; border-radius:9px; cursor:pointer; font-family:inherit; font-weight:700; }
+  button.reject:hover{ background:rgba(196,85,63,0.08); }
+
+  .submit-row{ margin-top:26px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  .status{ font-size:14px; font-weight:600; display:none; align-items:center; gap:8px; }
+  .status.show{ display:flex; }
+  .status.ok{ color:var(--teal-dark); }
+  .status.err{ color:var(--danger); }
+
+  .round-toggle{ display:flex; gap:10px; margin-top:14px; }
+  .round-toggle button{
+    flex:1; padding:12px; border-radius:10px; border:1.5px solid #DEDACB; background:#FCFBF7;
+    font-family:inherit; font-weight:700; font-size:14px; color:var(--text-muted); cursor:pointer; transition:.15s;
+  }
+  .round-toggle button.active{ border-color:var(--teal); background:rgba(63,167,150,0.1); color:var(--teal-dark); }
+
+  .signal-card{ border:1px solid var(--paper-line); border-radius:12px; padding:20px 20px 16px; margin-bottom:14px; background:#FDFCF8; }
+  .signal-card h3{ margin:0 0 6px; font-size:16.5px; }
+  .signal-meta{ font-size:12.5px; color:var(--text-muted); margin-bottom:8px; }
+  .signal-desc{ font-size:14px; margin-bottom:12px; }
+  .group-summary{
+    display:inline-flex; gap:12px; flex-wrap:wrap; font-size:12px; color:var(--teal-dark);
+    background:rgba(63,167,150,0.08); border:1px solid rgba(63,167,150,0.25);
+    padding:7px 11px; border-radius:8px; margin-bottom:12px;
+  }
+  .dim-row{ margin-bottom:12px; }
+  .dim-row > .dim-label{ font-weight:600; font-size:13px; margin-bottom:6px; display:block; }
+  .comment-field textarea{ min-height:46px; font-size:13.5px; }
+
+  /* KPI + charts (dashboard) */
+  .kpi-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+  @media (max-width:820px){ .kpi-row{ grid-template-columns:repeat(2,1fr); } }
+  .kpi-card{ background:#fff; border:1px solid var(--paper-line); border-radius:var(--radius); padding:18px 20px; box-shadow:0 14px 34px -22px rgba(18,24,43,0.3); }
+  .kpi-label{ font-size:12px; color:var(--text-muted); font-weight:600; margin-bottom:7px; }
+  .kpi-value{ font-size:25px; font-weight:800; color:var(--teal-dark); }
+  .chart-row{ display:grid; grid-template-columns:1.3fr 1fr; gap:16px; margin-bottom:20px; }
+  @media (max-width:900px){ .chart-row{ grid-template-columns:1fr; } }
+  .chart-box{ position:relative; height:290px; direction:ltr; }
+  .chart-box.small{ height:250px; }
+  .breakdowns{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+  @media (max-width:820px){ .breakdowns{ grid-template-columns:1fr; } }
+  .chart-box.mini{ height:190px; direction:ltr; }
+  .panel h2{ font-size:16px; margin:0 0 4px; }
+  .panel .sub{ font-size:12.5px; color:var(--text-muted); margin:0 0 14px; }
+
+  .filters{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+  .filters select{ font-size:13.5px; padding:9px 12px; }
+
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  thead th{ text-align:right; padding:10px; border-bottom:2px solid var(--paper-line); color:var(--text-muted); font-weight:700; font-size:12px; white-space:nowrap; }
+  tbody td{ padding:10px; border-bottom:1px solid #F0EDE3; vertical-align:top; }
+  tbody tr:hover{ background:#FCFBF7; }
+  .pill{ display:inline-block; padding:3px 9px; border-radius:999px; font-size:11.5px; font-weight:700; }
+  .pill.low{ background:rgba(63,167,150,0.12); color:var(--teal-dark); }
+  .pill.mid{ background:rgba(217,164,65,0.18); color:#8A6414; }
+  .pill.high{ background:rgba(196,85,63,0.14); color:var(--danger); }
+  .pill.none{ background:#EFEDE4; color:var(--text-muted); }
+
+  .candidate-card{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; border:1px solid var(--paper-line); border-radius:12px; padding:18px 20px; margin-bottom:12px; background:#FDFCF8; flex-wrap:wrap; }
+  .candidate-info h3{ margin:0 0 6px; font-size:15.5px; }
+  .candidate-info .signal-meta{ margin-bottom:6px; }
+  .candidate-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+
+  .empty-state, .loading-state{ text-align:center; color:var(--text-muted); padding:34px 10px; font-size:14.5px; }
+  footer{ text-align:center; font-size:12.5px; color:var(--text-muted); padding:20px 0 40px; }
+</style>
+</head>
+<body>
+
+  <div class="appbar">
+    <div class="appbar-top">
+      <div>
+        <h1>پلتفرم رصد افق اخلاق زیست‌پزشکی ایران</h1>
+        <div class="tagline">پروژه اخلاق زیست‌پزشکی ایران &middot; چهار فاز، یک برنامه</div>
+      </div>
+    </div>
+    <div class="tabs" role="tablist" aria-label="بخش‌های برنامه">
+      <button role="tab" id="tabbtn-intake" aria-selected="true" data-tab="intake">۱ &middot; ثبت سیگنال</button>
+      <button role="tab" id="tabbtn-delphi" aria-selected="false" data-tab="delphi">۲ &middot; ارزیابی خبرگان</button>
+      <button role="tab" id="tabbtn-dashboard" aria-selected="false" data-tab="dashboard">۳ &middot; داشبورد</button>
+      <button role="tab" id="tabbtn-review" aria-selected="false" data-tab="review">۴ &middot; بازبینی کاندیدها</button>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- ================= TAB 1: SIGNAL INTAKE ================= -->
+    <section id="tab-intake" class="tab-panel active" role="tabpanel" aria-labelledby="tabbtn-intake">
+      <p class="lede"><b>فاز اول.</b> هر فناوری، شیوه پژوهشی یا پویایی اجتماعی نوظهور در علوم زیست‌پزشکی ایران که ممکن است پیامد اخلاقی داشته باشد را ثبت کنید.</p>
+
+      <form id="signalForm" class="panel" novalidate>
+        <label class="field-label" for="title">عنوان سیگنال<span class="req">*</span></label>
+        <input type="text" id="title" name="title" required placeholder="مثال: استفاده از سیستم‌های هوش مصنوعی مولد در تشخیص بالینی">
+
+        <label class="field-label" for="description">توضیحات<span class="req">*</span></label>
+        <textarea id="description" name="description" required placeholder="این سیگنال چیست؟ چرا واجد اهمیت اخلاقی است؟"></textarea>
+
+        <div class="grid-2">
+          <div>
+            <label class="field-label" for="subfield">حوزه زیست‌پزشکی<span class="req">*</span></label>
+            <select id="subfield" name="subfield" required>
+              <option value="" disabled selected>انتخاب کنید…</option>
+              <option>ژنومیک</option><option>عصب‌فناوری</option><option>پزشکی دقیق</option>
+              <option>فناوری‌های باروری</option><option>پژوهش ارگانوئید</option>
+              <option>سلامت دیجیتال</option><option>هوش مصنوعی در پزشکی</option><option>سایر</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="sourceType">نوع منبع<span class="req">*</span></label>
+            <select id="sourceType" name="sourceType" required>
+              <option value="" disabled selected>انتخاب کنید…</option>
+              <option>مقاله علمی داوری‌شده</option><option>ادبیات خاکستری (گزارش سیاستی)</option>
+              <option>پایگاه داده پتنت / نوآوری</option><option>رسانه و بحث عمومی</option>
+              <option>فراخوان پژوهشی ملی/بین‌المللی</option><option>سایر</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="field-label" for="sourceLink">لینک یا ارجاع منبع</label>
+        <input type="text" id="sourceLink" name="sourceLink" placeholder="آدرس اینترنتی یا ارجاع کتاب‌شناختی">
+
+        <label class="field-label">سطح بلوغ<span class="req">*</span></label>
+        <div class="tier-scale" role="radiogroup" aria-label="سطح بلوغ">
+          <div class="tier-option"><input type="radio" name="maturity" id="mat1" value="نوظهور" required><label for="mat1"><span class="bars"><span></span><span></span><span></span></span>نوظهور</label></div>
+          <div class="tier-option"><input type="radio" name="maturity" id="mat2" value="در حال توسعه"><label for="mat2"><span class="bars"><span></span><span></span><span></span></span>در حال توسعه</label></div>
+          <div class="tier-option"><input type="radio" name="maturity" id="mat3" value="تثبیت‌شده"><label for="mat3"><span class="bars"><span></span><span></span><span></span></span>تثبیت‌شده</label></div>
+        </div>
+
+        <label class="field-label">دامنه جغرافیایی<span class="req">*</span></label>
+        <div class="tier-scale" role="radiogroup" aria-label="دامنه جغرافیایی">
+          <div class="tier-option"><input type="radio" name="geography" id="geo1" value="مختص ایران" required><label for="geo1"><span class="bars"><span></span><span></span><span></span></span>مختص ایران</label></div>
+          <div class="tier-option"><input type="radio" name="geography" id="geo2" value="منطقه‌ای (خاورمیانه)"><label for="geo2"><span class="bars"><span></span><span></span><span></span></span>منطقه‌ای</label></div>
+          <div class="tier-option"><input type="radio" name="geography" id="geo3" value="جهانی"><label for="geo3"><span class="bars"><span></span><span></span><span></span></span>جهانی</label></div>
+        </div>
+
+        <label class="field-label">شدت اخلاقی اولیه<span class="req">*</span></label>
+        <div class="tier-scale" role="radiogroup" aria-label="شدت اخلاقی اولیه">
+          <div class="tier-option"><input type="radio" name="intensity" id="int1" value="کم" required><label for="int1"><span class="bars"><span></span><span></span><span></span></span>کم</label></div>
+          <div class="tier-option"><input type="radio" name="intensity" id="int2" value="متوسط"><label for="int2"><span class="bars"><span></span><span></span><span></span></span>متوسط</label></div>
+          <div class="tier-option"><input type="radio" name="intensity" id="int3" value="زیاد"><label for="int3"><span class="bars"><span></span><span></span><span></span></span>زیاد</label></div>
+        </div>
+
+        <div class="grid-2">
+          <div><label class="field-label" for="submitterName">نام و وابستگی سازمانی</label><input type="text" id="submitterName" name="submitterName" placeholder="اختیاری"></div>
+          <div><label class="field-label" for="submitterEmail">ایمیل</label><input type="email" id="submitterEmail" name="submitterEmail" placeholder="اختیاری"></div>
+        </div>
+
+        <div class="submit-row">
+          <button type="submit" class="primary" id="intakeSubmitBtn">ثبت سیگنال</button>
+          <div class="status" id="intakeStatus"></div>
+        </div>
+      </form>
+    </section>
+
+    <!-- ================= TAB 2: DELPHI ================= -->
+    <section id="tab-delphi" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-delphi">
+      <p class="lede"><b>فاز دوم.</b> سیگنال‌های ثبت‌شده را از نظر پذیرفتنی بودن، اهمیت و فوریت ارزیابی کنید. در دور دوم، میانه نظر گروه به‌صورت ناشناس نمایش داده می‌شود.</p>
+
+      <div class="panel">
+        <div class="grid-2">
+          <div><label class="field-label" for="expertName">نام و وابستگی سازمانی<span class="req">*</span></label><input type="text" id="expertName" required placeholder="مثال: دکتر … ، دانشگاه علوم پزشکی …"></div>
+          <div><label class="field-label" for="expertEmail">ایمیل</label><input type="email" id="expertEmail" placeholder="اختیاری"></div>
+        </div>
+        <label class="field-label">دور ارزیابی</label>
+        <div class="round-toggle">
+          <button type="button" id="roundBtn1" class="active" data-round="1">دور اول</button>
+          <button type="button" id="roundBtn2" data-round="2">دور دوم (بازبینی با نظر گروه)</button>
+        </div>
+      </div>
+
+      <div id="delphiSignalsContainer"><div class="loading-state">در حال بارگذاری سیگنال‌ها…</div></div>
+
+      <div class="panel" id="delphiSubmitPanel" style="display:none;">
+        <div class="submit-row">
+          <button type="button" class="primary" id="delphiSubmitBtn">ثبت ارزیابی‌ها</button>
+          <div class="status" id="delphiStatus"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 3: DASHBOARD ================= -->
+    <section id="tab-dashboard" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-dashboard">
+      <p class="lede"><b>فاز چهارم.</b> نمای زنده از سیگنال‌های ثبت‌شده و ارزیابی خبرگان — برای شناسایی سیگنال‌هایی که بیشترین نیاز به توجه سیاست‌گذاری دارند.
+        <button type="button" class="ghost" id="dashboardRefreshBtn" style="margin-inline-start:10px;">بازخوانی داده</button>
+      </p>
+
+      <div class="kpi-row">
+        <div class="kpi-card"><div class="kpi-label">مجموع سیگنال‌های ثبت‌شده</div><div class="kpi-value" id="kpiTotal">–</div></div>
+        <div class="kpi-card"><div class="kpi-label">خبرگان مشارکت‌کننده</div><div class="kpi-value" id="kpiExperts">–</div></div>
+        <div class="kpi-card"><div class="kpi-label">پاسخ‌های دور اول</div><div class="kpi-value" id="kpiRound1">–</div></div>
+        <div class="kpi-card"><div class="kpi-label">پاسخ‌های دور دوم</div><div class="kpi-value" id="kpiRound2">–</div></div>
+      </div>
+
+      <div class="chart-row">
+        <div class="panel">
+          <h2>نقشه اولویت‌بندی سیگنال‌ها</h2>
+          <p class="sub">محور افقی: اهمیت &middot; محور عمودی: فوریت &middot; اندازه حباب: تعداد پاسخ خبرگان</p>
+          <div class="chart-box"><canvas id="priorityChart"></canvas></div>
+        </div>
+        <div class="panel">
+          <h2>وضعیت ارزیابی سیگنال‌ها</h2>
+          <p class="sub">سهم سیگنال‌های ارزیابی‌شده در دلفی نسبت به کل</p>
+          <div class="chart-box small"><canvas id="statusChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="breakdowns">
+        <div class="panel"><h2>حوزه زیست‌پزشکی</h2><div class="chart-box mini"><canvas id="subfieldChart"></canvas></div></div>
+        <div class="panel"><h2>سطح بلوغ</h2><div class="chart-box mini"><canvas id="maturityChart"></canvas></div></div>
+        <div class="panel"><h2>دامنه جغرافیایی</h2><div class="chart-box mini"><canvas id="geoChart"></canvas></div></div>
+      </div>
+
+      <div class="panel">
+        <h2>فهرست سیگنال‌ها</h2>
+        <p class="sub">می‌توانید بر اساس حوزه، سطح بلوغ یا شدت اخلاقی فیلتر کنید.</p>
+        <div class="filters">
+          <select id="filterSubfield"><option value="">همه حوزه‌ها</option></select>
+          <select id="filterMaturity"><option value="">همه سطوح بلوغ</option></select>
+          <select id="filterIntensity"><option value="">همه سطوح شدت</option></select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>عنوان</th><th>حوزه</th><th>بلوغ</th><th>جغرافیا</th><th>شدت اولیه</th><th>اهمیت (دلفی)</th><th>فوریت (دلفی)</th><th>پاسخ خبرگان</th></tr></thead>
+            <tbody id="signalsTableBody"><tr><td colspan="8" class="loading-state">در حال بارگذاری…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 4: CANDIDATE REVIEW ================= -->
+    <section id="tab-review" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-review">
+      <p class="lede"><b>خروجی رصد خودکار ادبیات (اسکریپت پایتون).</b> این موارد به‌صورت خودکار از PubMed یافت شده‌اند. هر مورد را بازبینی کنید: تأیید = انتقال به فهرست سیگنال‌های رسمی؛ رد = حذف از صف بازبینی.
+        <button type="button" class="ghost" id="reviewRefreshBtn" style="margin-inline-start:10px;">بازخوانی</button>
+      </p>
+      <div id="candidatesContainer"><div class="loading-state">در حال بارگذاری کاندیدها…</div></div>
+    </section>
+
+  </main>
+
+  <footer>پروژه رصد افق اخلاق زیست‌پزشکی ایران &middot; پلتفرم یکپارچه چهار ماژول</footer>
+
+<script>
+  const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbyZHESMWxHInCLWkPdNtAK6hAr4WJwT6E3ZWYUzbrvUulh0J_AlzHWBSUbsTDTTRGKM/exec";
+
+  /* ---------------- shared helpers ---------------- */
+  function escapeHtml(str){
+    return String(str || '').replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function tierPillClass(val){
+    if(val === 'زیاد') return 'high';
+    if(val === 'متوسط') return 'mid';
+    if(val === 'کم') return 'low';
+    return 'none';
+  }
+  function localBackup(key, record){
+    try{
+      const existing = JSON.parse(localStorage.getItem(key) || '[]');
+      existing.push(record);
+      localStorage.setItem(key, JSON.stringify(existing));
+    }catch(e){ /* ignore */ }
+  }
+  function endpointConfigured(){ return ENDPOINT_URL && !ENDPOINT_URL.startsWith('PASTE_'); }
+
+  /* ---------------- tab navigation ---------------- */
+  const TABS = ['intake', 'delphi', 'dashboard', 'review'];
+  const loadedTabs = {};
+
+  function activateTab(name){
+    TABS.forEach(function(t){
+      document.getElementById('tab-' + t).classList.toggle('active', t === name);
+      document.getElementById('tabbtn-' + t).setAttribute('aria-selected', t === name ? 'true' : 'false');
+    });
+    if(!loadedTabs[name]){
+      loadedTabs[name] = true;
+      if(name === 'delphi') loadDelphiData();
+      if(name === 'dashboard') loadDashboard();
+      if(name === 'review') loadCandidates();
+    }
+  }
+  TABS.forEach(function(t){
+    document.getElementById('tabbtn-' + t).addEventListener('click', function(){ activateTab(t); });
+  });
+
+  /* ================= TAB 1: SIGNAL INTAKE ================= */
+  (function(){
+    const form = document.getElementById('signalForm');
+    const submitBtn = document.getElementById('intakeSubmitBtn');
+    const statusMsg = document.getElementById('intakeStatus');
+
+    function setStatus(kind, text){ statusMsg.textContent = text; statusMsg.className = 'status show ' + kind; }
+
+    form.addEventListener('submit', async function(e){
+      e.preventDefault();
+      if(!form.checkValidity()){ form.reportValidity(); return; }
+
+      const data = Object.fromEntries(new FormData(form).entries());
+      data.timestamp = new Date().toISOString();
+
+      submitBtn.disabled = true; submitBtn.textContent = 'در حال ثبت…'; statusMsg.className = 'status';
+      localBackup('ethicalHorizonSignals', data);
+
+      if(!endpointConfigured()){
+        submitBtn.disabled = false; submitBtn.textContent = 'ثبت سیگنال';
+        setStatus('err', 'آدرس اتصال به Google Sheets هنوز تنظیم نشده است.');
+        return;
+      }
+      try{
+        await fetch(ENDPOINT_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(data) });
+        form.reset();
+        setStatus('ok', 'سیگنال با موفقیت ثبت شد. سپاسگزاریم.');
+      }catch(err){
+        setStatus('err', 'ثبت آنلاین ناموفق بود. نسخه‌ای از داده روی همین مرورگر ذخیره شد.');
+      }finally{
+        submitBtn.disabled = false; submitBtn.textContent = 'ثبت سیگنال';
+      }
+    });
+  })();
+
+  /* ================= TAB 2: DELPHI ================= */
+  const DIMENSIONS = [
+    { key:'plausibility', label:'پذیرفتنی بودن' },
+    { key:'significance', label:'اهمیت' },
+    { key:'urgency', label:'فوریت' }
+  ];
+  const TIERS = ['کم', 'متوسط', 'زیاد'];
+  let delphiRound = 1;
+  let delphiSignals = [];
+  let delphiAggregates = {};
+
+  function tierBars(prefix, id, dimKey){
+    return TIERS.map(function(t, i){
+      const inputId = prefix + '_' + dimKey + '_' + id + '_' + i;
+      return '<div class="tier-option"><input type="radio" name="'+dimKey+'_'+id+'" id="'+inputId+'" value="'+t+'" required>' +
+        '<label for="'+inputId+'"><span class="bars"><span></span><span></span><span></span></span>'+t+'</label></div>';
+    }).join('');
+  }
+
+  function renderDelphiSignals(){
+    const container = document.getElementById('delphiSignalsContainer');
+    const submitPanel = document.getElementById('delphiSubmitPanel');
+    if(!delphiSignals.length){
+      container.innerHTML = '<div class="panel empty-state">هنوز سیگنالی در فاز اول ثبت نشده است.</div>';
+      submitPanel.style.display = 'none';
+      return;
+    }
+    container.innerHTML = delphiSignals.map(function(sig){
+      const agg = delphiAggregates[sig.id];
+      let summaryHtml = '';
+      if(delphiRound === 2){
+        summaryHtml = agg
+          ? '<div class="group-summary">نظر گروه در دور اول (بر اساس '+agg.count+' پاسخ)&nbsp;&middot;&nbsp;<span><b>پذیرفتنی بودن:</b> '+agg.plausibility+'</span><span><b>اهمیت:</b> '+agg.significance+'</span><span><b>فوریت:</b> '+agg.urgency+'</span></div>'
+          : '<div class="group-summary">هنوز پاسخ دور اول برای این سیگنال ثبت نشده است.</div>';
+      }
+      const dimsHtml = DIMENSIONS.map(function(d){
+        return '<div class="dim-row"><span class="dim-label">'+d.label+'</span><div class="tier-scale">'+tierBars('r'+delphiRound, sig.id, d.key)+'</div></div>';
+      }).join('');
+      return '<div class="panel signal-card" data-signal-id="'+sig.id+'">' +
+        '<h3>'+escapeHtml(sig.title)+'</h3>' +
+        '<div class="signal-meta">'+escapeHtml(sig.subfield)+' &middot; منبع: '+escapeHtml(sig.sourceType)+'</div>' +
+        '<div class="signal-desc">'+escapeHtml(sig.description)+'</div>' +
+        summaryHtml + dimsHtml +
+        '<div class="comment-field"><label class="field-label" style="margin-top:0;">یادداشت (اختیاری)</label><textarea class="commentInput" placeholder="توضیح یا استدلال شما…"></textarea></div>' +
+        '</div>';
+    }).join('');
+    submitPanel.style.display = 'block';
+  }
+
+  async function loadDelphiData(){
+    const container = document.getElementById('delphiSignalsContainer');
+    container.innerHTML = '<div class="loading-state">در حال بارگذاری سیگنال‌ها…</div>';
+    document.getElementById('delphiSubmitPanel').style.display = 'none';
+    if(!endpointConfigured()){
+      container.innerHTML = '<div class="panel empty-state">آدرس اتصال به Google Sheets هنوز تنظیم نشده است.</div>';
+      return;
+    }
+    try{
+      const signalsRes = await fetch(ENDPOINT_URL + '?action=signals');
+      delphiSignals = await signalsRes.json();
+      if(delphiRound === 2){
+        const aggRes = await fetch(ENDPOINT_URL + '?action=aggregates&round=1');
+        delphiAggregates = await aggRes.json();
+      } else { delphiAggregates = {}; }
+      renderDelphiSignals();
+    }catch(err){
+      container.innerHTML = '<div class="panel empty-state">بارگذاری سیگنال‌ها ناموفق بود.</div>';
+    }
+  }
+
+  document.getElementById('roundBtn1').addEventListener('click', function(){
+    delphiRound = 1;
+    this.classList.add('active'); document.getElementById('roundBtn2').classList.remove('active');
+    loadDelphiData();
+  });
+  document.getElementById('roundBtn2').addEventListener('click', function(){
+    delphiRound = 2;
+    this.classList.add('active'); document.getElementById('roundBtn1').classList.remove('active');
+    loadDelphiData();
+  });
+
+  document.getElementById('delphiSubmitBtn').addEventListener('click', async function(){
+    const statusMsg = document.getElementById('delphiStatus');
+    const submitBtn = this;
+    function setStatus(kind, text){ statusMsg.textContent = text; statusMsg.className = 'status show ' + kind; }
+
+    const name = document.getElementById('expertName').value.trim();
+    if(!name){ setStatus('err', 'لطفاً نام و وابستگی سازمانی خود را وارد کنید.'); document.getElementById('expertName').focus(); return; }
+
+    const cards = Array.from(document.querySelectorAll('#delphiSignalsContainer .signal-card'));
+    const responses = []; let missing = false;
+    cards.forEach(function(card){
+      const sid = card.getAttribute('data-signal-id');
+      const title = card.querySelector('h3').textContent;
+      const resp = { signalId: sid, signalTitle: title };
+      DIMENSIONS.forEach(function(d){
+        const checked = card.querySelector('input[name="'+d.key+'_'+sid+'"]:checked');
+        if(checked) resp[d.key] = checked.value; else missing = true;
+      });
+      resp.comment = card.querySelector('.commentInput').value.trim();
+      if(resp.plausibility || resp.significance || resp.urgency) responses.push(resp);
+    });
+    if(!responses.length){ setStatus('err', 'حداقل یک سیگنال را ارزیابی کنید.'); return; }
+
+    submitBtn.disabled = true; submitBtn.textContent = 'در حال ثبت…'; statusMsg.className = 'status';
+    const payload = { recordType:'delphi', timestamp:new Date().toISOString(), round:delphiRound, expertName:name, expertEmail:document.getElementById('expertEmail').value.trim(), responses:responses };
+    try{
+      await fetch(ENDPOINT_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) });
+      setStatus('ok', missing ? 'ارزیابی‌های تکمیل‌شده ثبت شد. برخی سیگنال‌ها ناقص رها شدند.' : 'همه ارزیابی‌ها با موفقیت ثبت شد. سپاسگزاریم.');
+    }catch(err){
+      setStatus('err', 'ثبت آنلاین ناموفق بود.');
+    }finally{
+      submitBtn.disabled = false; submitBtn.textContent = 'ثبت ارزیابی‌ها';
+    }
+  });
+
+  /* ================= TAB 3: DASHBOARD ================= */
+  const CHART_TEAL='#3FA796', CHART_AMBER='#D9A441', CHART_VIOLET='#9C86D6', CHART_NAVY='#1B2340', CHART_MUTED='#B9B6A8';
+  const PALETTE=[CHART_TEAL, CHART_AMBER, CHART_VIOLET, CHART_NAVY, '#C4553F', '#7C5CBF', '#5B5A4E'];
+  let dashboardSignals = [];
+  let dashboardCharts = {};
+
+  function destroyChart(id){ if(dashboardCharts[id]){ dashboardCharts[id].destroy(); delete dashboardCharts[id]; } }
+
+  async function loadDashboard(){
+    const tbody = document.getElementById('signalsTableBody');
+    if(!endpointConfigured()){
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">آدرس اتصال به Google Sheets هنوز تنظیم نشده است.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = '<tr><td colspan="8" class="loading-state">در حال بارگذاری…</td></tr>';
+    try{
+      const res = await fetch(ENDPOINT_URL + '?action=dashboard');
+      const data = await res.json();
+      dashboardSignals = data.signals || [];
+      renderKpis(data.summary, data.delphiMeta);
+      renderPriorityChart(dashboardSignals);
+      renderStatusChart(dashboardSignals);
+      renderBreakdown('subfieldChart', data.summary.counts.subfield);
+      renderBreakdown('maturityChart', data.summary.counts.maturity);
+      renderBreakdown('geoChart', data.summary.counts.geography);
+      populateFilters(dashboardSignals);
+      renderTable(dashboardSignals);
+    }catch(err){
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">بارگذاری داده ناموفق بود.</td></tr>';
+    }
+  }
+  document.getElementById('dashboardRefreshBtn').addEventListener('click', loadDashboard);
+
+  function renderKpis(summary, meta){
+    document.getElementById('kpiTotal').textContent = summary.total.toLocaleString('fa-IR');
+    document.getElementById('kpiExperts').textContent = meta.expertCount.toLocaleString('fa-IR');
+    document.getElementById('kpiRound1').textContent = meta.round1Count.toLocaleString('fa-IR');
+    document.getElementById('kpiRound2').textContent = meta.round2Count.toLocaleString('fa-IR');
+  }
+
+  function renderPriorityChart(signals){
+    destroyChart('priority');
+    const rated = signals.filter(function(s){ return s.latest; });
+    const points = rated.map(function(s){ return { x:s.latest.significanceValue, y:s.latest.urgencyValue, r:6+(s.latest.count||1)*3, title:s.title }; });
+    dashboardCharts.priority = new Chart(document.getElementById('priorityChart'), {
+      type:'bubble',
+      data:{ datasets:[{ label:'سیگنال‌ها', data:points, backgroundColor:'rgba(63,167,150,0.55)', borderColor:CHART_TEAL, borderWidth:1 }] },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        scales:{
+          x:{ min:0.5, max:3.5, ticks:{ stepSize:1, callback:function(v){ return ['','کم','متوسط','زیاد'][v] || ''; } }, title:{ display:true, text:'اهمیت' } },
+          y:{ min:0.5, max:3.5, ticks:{ stepSize:1, callback:function(v){ return ['','کم','متوسط','زیاد'][v] || ''; } }, title:{ display:true, text:'فوریت' } }
+        },
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:function(ctx){ return ctx.raw.title; } } } }
+      }
+    });
+  }
+
+  function renderStatusChart(signals){
+    destroyChart('status');
+    const rated = signals.filter(function(s){ return s.latest; }).length;
+    const unrated = signals.length - rated;
+    dashboardCharts.status = new Chart(document.getElementById('statusChart'), {
+      type:'doughnut',
+      data:{ labels:['ارزیابی‌شده','ارزیابی‌نشده'], datasets:[{ data:[rated, unrated], backgroundColor:[CHART_TEAL, CHART_MUTED] }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ font:{ family:'Vazirmatn' } } } } }
+    });
+  }
+
+  function renderBreakdown(canvasId, countsObj){
+    destroyChart(canvasId);
+    const labels = Object.keys(countsObj);
+    const values = labels.map(function(l){ return countsObj[l]; });
+    dashboardCharts[canvasId] = new Chart(document.getElementById(canvasId), {
+      type:'bar',
+      data:{ labels:labels, datasets:[{ data:values, backgroundColor:labels.map(function(_, i){ return PALETTE[i % PALETTE.length]; }) }] },
+      options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y', plugins:{ legend:{ display:false } }, scales:{ x:{ beginAtZero:true, ticks:{ precision:0 } }, y:{ ticks:{ font:{ family:'Vazirmatn', size:11 } } } } }
+    });
+  }
+
+  function populateFilters(signals){
+    function fillSelect(id, key){
+      const sel = document.getElementById(id);
+      sel.innerHTML = sel.options[0].outerHTML;
+      const values = Array.from(new Set(signals.map(function(s){ return s[key]; }).filter(Boolean))).sort();
+      values.forEach(function(v){ const opt=document.createElement('option'); opt.value=v; opt.textContent=v; sel.appendChild(opt); });
+    }
+    fillSelect('filterSubfield','subfield'); fillSelect('filterMaturity','maturity'); fillSelect('filterIntensity','intensity');
+  }
+  ['filterSubfield','filterMaturity','filterIntensity'].forEach(function(id){
+    document.getElementById(id).addEventListener('change', function(){
+      const sf=document.getElementById('filterSubfield').value, mt=document.getElementById('filterMaturity').value, it=document.getElementById('filterIntensity').value;
+      renderTable(dashboardSignals.filter(function(s){ return (!sf||s.subfield===sf) && (!mt||s.maturity===mt) && (!it||s.intensity===it); }));
+    });
+  });
+
+  function renderTable(signals){
+    const body = document.getElementById('signalsTableBody');
+    if(!signals.length){ body.innerHTML = '<tr><td colspan="8" class="empty-state">سیگنالی با این فیلترها یافت نشد.</td></tr>'; return; }
+    body.innerHTML = signals.map(function(s){
+      const respCount = s.latest ? s.latest.count : 0;
+      return '<tr><td>'+escapeHtml(s.title)+'</td><td>'+escapeHtml(s.subfield)+'</td><td>'+escapeHtml(s.maturity)+'</td><td>'+escapeHtml(s.geography)+'</td>' +
+        '<td><span class="pill '+tierPillClass(s.intensity)+'">'+escapeHtml(s.intensity||'—')+'</span></td>' +
+        '<td><span class="pill '+tierPillClass(s.latest?s.latest.significance:null)+'">'+escapeHtml(s.latest?s.latest.significance:'—')+'</span></td>' +
+        '<td><span class="pill '+tierPillClass(s.latest?s.latest.urgency:null)+'">'+escapeHtml(s.latest?s.latest.urgency:'—')+'</span></td>' +
+        '<td>'+respCount+'</td></tr>';
+    }).join('');
+  }
+
+  /* ================= TAB 4: CANDIDATE REVIEW ================= */
+  async function loadCandidates(){
+    const container = document.getElementById('candidatesContainer');
+    if(!endpointConfigured()){
+      container.innerHTML = '<div class="panel empty-state">آدرس اتصال به Google Sheets هنوز تنظیم نشده است.</div>';
+      return;
+    }
+    container.innerHTML = '<div class="loading-state">در حال بارگذاری کاندیدها…</div>';
+    try{
+      const res = await fetch(ENDPOINT_URL + '?action=candidates');
+      const candidates = await res.json();
+      renderCandidates(candidates);
+    }catch(err){
+      container.innerHTML = '<div class="panel empty-state">بارگذاری کاندیدها ناموفق بود.</div>';
+    }
+  }
+  document.getElementById('reviewRefreshBtn').addEventListener('click', loadCandidates);
+
+  function renderCandidates(candidates){
+    const container = document.getElementById('candidatesContainer');
+    if(!candidates.length){
+      container.innerHTML = '<div class="panel empty-state">صف بازبینی خالی است. اسکریپت رصد ادبیات را اجرا کنید تا کاندید جدید اضافه شود.</div>';
+      return;
+    }
+    container.innerHTML = candidates.map(function(c){
+      return '<div class="candidate-card" data-id="'+c.id+'">' +
+        '<div class="candidate-info">' +
+          '<h3>'+escapeHtml(c.title)+'</h3>' +
+          '<div class="signal-meta">'+escapeHtml(c.subfield)+' &middot; '+escapeHtml(c.sourceType)+'</div>' +
+          '<div class="signal-desc">'+escapeHtml(c.description)+'</div>' +
+          (c.sourceLink ? '<a href="'+escapeHtml(c.sourceLink)+'" target="_blank" rel="noopener" style="font-size:13px;color:var(--teal-dark);">مشاهده منبع →</a>' : '') +
+        '</div>' +
+        '<div class="candidate-actions">' +
+          '<button type="button" class="primary approveBtn">تأیید و انتقال</button>' +
+          '<button type="button" class="reject rejectBtn">رد</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    container.querySelectorAll('.approveBtn').forEach(function(btn){
+      btn.addEventListener('click', function(){ handleCandidateAction(btn, 'promoteCandidate'); });
+    });
+    container.querySelectorAll('.rejectBtn').forEach(function(btn){
+      btn.addEventListener('click', function(){ handleCandidateAction(btn, 'rejectCandidate'); });
+    });
+  }
+
+  async function handleCandidateAction(btn, recordType){
+    const card = btn.closest('.candidate-card');
+    const id = card.getAttribute('data-id');
+    card.querySelectorAll('button').forEach(function(b){ b.disabled = true; });
+    try{
+      await fetch(ENDPOINT_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ recordType:recordType, id:Number(id) }) });
+      card.remove();
+    }catch(err){
+      card.querySelectorAll('button').forEach(function(b){ b.disabled = false; });
+    }
+  }
+
+</script>
+</body>
+</html>
